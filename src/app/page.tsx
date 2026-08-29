@@ -6,7 +6,8 @@ import { ProjectBoard } from "@/components/dashboard/ProjectBoard";
 import { WeekStrip } from "@/components/dashboard/WeekStrip";
 
 import { inboxCount, listInbox } from "@/lib/db/queries/capture";
-import { listEventDots, listEventsOn, listUpcomingDdays } from "@/lib/db/queries/event";
+import { listEventDots, listUpcomingDdays } from "@/lib/db/queries/event";
+import { listDayItems } from "@/lib/dayItems";
 import { listProjectCards, listProjectOptions } from "@/lib/db/queries/project";
 import { listTodayTasks } from "@/lib/db/queries/task";
 import { todayISO, weekOf } from "@/lib/date";
@@ -30,7 +31,8 @@ export default function Home() {
   const projects = listProjectOptions();
   const cards = listProjectCards(today);
   const tasks = listTodayTasks(today);
-  const events = listEventsOn(today);
+  // 일정과 수업을 시간순으로 한 줄에 섞는다
+  const events = listDayItems(today, today);
   const ddays = listUpcomingDdays(today);
   const dots = listEventDots(week[0], week[6]);
   const inbox = listInbox();
@@ -47,7 +49,7 @@ export default function Home() {
           <TodoList items={tasks} projects={projects} today={today} />
         </Section>
 
-        <Section title="오늘 일정" count={events.length}>
+        <Section title="오늘 일정 · 수업" count={events.length}>
           <TodayEvents events={events} />
         </Section>
 

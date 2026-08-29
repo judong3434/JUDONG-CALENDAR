@@ -9,7 +9,8 @@ import {
   UNCATEGORIZED,
 } from "@/components/calendar/CategoryFilter";
 
-import { listEventsInRange, type EventItem } from "@/lib/db/queries/event";
+import type { EventItem } from "@/lib/db/queries/event";
+import { listDayItems } from "@/lib/dayItems";
 import {
   addDaysISO,
   addMonths,
@@ -67,7 +68,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
   // 필터는 SQL 이 아니라 여기서 건다. 한 달치 일정은 많아야 수십 건이고,
   // "미분류(프로젝트 없음)"를 IN 절로 표현하면 SQL 이 눈에 띄게 지저분해진다.
-  const allEvents = listEventsInRange(from, to);
+  const allEvents = listDayItems(from, to);
   const events =
     cats.size === 0
       ? allEvents

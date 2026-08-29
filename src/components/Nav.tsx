@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/", label: "홈" },
   { href: "/calendar", label: "캘린더" },
+  { href: "/timetable", label: "시간표" },
 ];
 
 export function Nav() {

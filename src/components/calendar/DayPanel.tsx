@@ -58,12 +58,14 @@ export function DayPanel({
                     D-day
                   </span>
                 )}
-                <DeleteEventButton id={e.id} />
+                {/* 수업은 시간표에서 전개된 것이라 여기서 지울 수 없다 */}
+                {e.kind === "event" && <DeleteEventButton id={e.id} />}
               </div>
               <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 pl-4 text-[11px] text-c-text-faint">
                 <span className="tabular-nums">
                   {formatTimeRange(e.startTime, e.endTime)}
                 </span>
+                {e.kind === "course" && <span>수업</span>}
                 {e.projectName && <span>{e.projectName}</span>}
                 {e.location && <span>{e.location}</span>}
               </div>

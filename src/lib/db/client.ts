@@ -57,7 +57,19 @@ function open(): DatabaseSync {
 }
 
 export function getDb(): DatabaseSync {
-  if (!globalForDb.__studioDb) globalForDb.__studioDb = open();
+  if (!globalForDb.__studioDb) {
+    globalForDb.__studioDb = open();
+    return globalForDb.__studioDb;
+  }
+
+  // 커넥션은 globalThis 에 살아 있어서 HMR 로는 다시 열리지 않는다.
+  // 그래서 새 마이그레이션 파일을 추가해도 dev 서버를 껐다 켜기 전에는
+  // 적용되지 않고 "no such table" 만 나온다.
+  // 개발 중에는 매번 확인한다 — readdir 한 번과 SELECT 한 번이고,
+  // 이미 적용된 파일은 곧바로 건너뛴다.
+  if (process.env.NODE_ENV !== "production") {
+    applyMigrations(globalForDb.__studioDb);
+  }
   return globalForDb.__studioDb;
 }
 

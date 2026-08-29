@@ -36,6 +36,12 @@ export interface EventItem extends Event {
   projectName: string | null;
   projectCategory: Category | null;
   projectShade: number | null;
+  /**
+   * 시간표에서 전개된 수업도 같은 자리에 얹힌다.
+   * 수업은 실제 event 행이 아니라 계산된 인스턴스라 지우거나 고칠 수 없다 —
+   * 화면에서 그걸 구분하는 데 쓴다.
+   */
+  kind: "event" | "course";
 }
 
 type EventItemRow = EventRow & {
@@ -47,6 +53,7 @@ type EventItemRow = EventRow & {
 function toEventItem(r: EventItemRow): EventItem {
   return {
     ...toEvent(r),
+    kind: "event",
     projectName: r.project_name,
     projectCategory: r.project_category,
     projectShade: r.project_shade,

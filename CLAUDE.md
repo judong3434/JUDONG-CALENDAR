@@ -61,28 +61,35 @@ Event 에 Task 가 매달리고, Task 는 실행할 날짜를 따로 갖는다.
 | --- | --- | --- |
 | 프레임워크 | Next.js 16 (App Router) + TypeScript | |
 | 스타일 | Tailwind CSS v4 | 토큰은 `globals.css` 의 `@theme` |
-| DB | **SQLite (`node:sqlite`)** | 브리프는 Supabase 였으나 아래 사유로 변경 |
+| DB | **libSQL (`@libsql/client`)** | 로컬은 파일, 배포는 Turso. 같은 코드 |
 | 캘린더 | 직접 구현 (CSS Grid) | 라이브러리 금지 |
 | 파싱 | 자체 규칙 파서 → LLM 폴백 | 대부분 규칙으로, 애매한 것만 AI |
 | 모바일 | **반응형 웹** (PWA 아님) | 폰 브라우저로 그냥 열어서 본다 |
 
-### DB 를 Supabase 대신 SQLite 로 한 이유
+### DB 를 libSQL 로 한 이유
 
-PC 에서 넣은 일정이 폰에서도 보여야 하므로 데이터가 브라우저(localStorage/IndexedDB)에
-있으면 안 된다. 그렇다고 Supabase 는 계정·프로젝트 생성이 선행돼야 한다.
-`node:sqlite` 는 Node 24 내장이라 설치도 계정도 없이 서버 DB 가 되고,
-PC·폰 모두 같은 서버를 보므로 데이터가 하나다.
+처음에는 Node 24 내장 `node:sqlite` 로 로컬 파일을 썼다. 계정 없이 바로 돌고
+PC·폰이 같은 서버를 보므로 데이터가 하나였다. 그런데 Vercel 은 서버리스라
+파일 시스템이 읽기 전용이고 요청마다 사라진다 — 로컬 파일로는 배포가 불가능하다.
 
-이관을 쉽게 하려고 스키마에 세 가지 제약을 걸어뒀다 (`db/migrations/0001_init.sql` 참고):
-id 는 TEXT(uuid), 날짜/시간은 `'YYYY-MM-DD'` / `'HH:MM'` 문자열, 불리언은 INTEGER 0/1.
-이 셋만 지키면 Postgres 이관이 타입 치환 수준으로 끝난다.
+libSQL 은 로컬 파일(`file:`)과 Turso(`libsql://`)를 같은 API 로 다룬다.
+그래서 개발과 배포가 같은 코드로 돌고 주소만 달라진다. SQL 방언도 SQLite 그대로라
+쿼리를 한 줄도 고치지 않았다. 대가는 모든 쿼리가 비동기가 된 것뿐이다.
+
+- 환경변수가 없으면 `file:data/studio.db` (개발)
+- `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` 이 있으면 그쪽 (배포)
+- 배포 환경에서 URL 이 없으면 던진다. 조용히 빈 로컬 DB 를 보는 것보다 낫다
+
+트랜잭션은 `batch()` 로 묶는다. 원격 DB 에서는 왕복 한 번으로 끝나고,
+문장을 미리 다 만들어야 하므로 id 는 앱에서 생성한다(`newId`).
 
 ## 구조
 
 ```
 src/app/            / 홈 대시보드, /calendar 캘린더, /timetable 시간표
 db/migrations/     스키마. 파일명 순서가 곧 적용 순서.
-data/              SQLite 파일 (gitignore). 서버 첫 요청 때 자동 생성·마이그레이션.
+data/              로컬 SQLite 파일 (gitignore). 개발 중에는 첫 쿼리 때 자동 마이그레이션.
+scripts/           마이그레이션 러너, 데이터 이관. 앱 모듈 그래프에 기대지 않는다.
 src/app/           라우트
 src/components/    UI 컴포넌트
 src/lib/db/        DB 커넥션 + 도메인별 쿼리
@@ -112,6 +119,7 @@ src/types/         도메인 타입 (DB 스키마와 1:1)
 ```
 npm run dev        # 0.0.0.0 바인딩 — 같은 와이파이의 폰에서도 접속된다
 npm run db:reset   # data/ 삭제. 다음 실행 때 스키마부터 다시 만든다
+npm run db:migrate # 마이그레이션 적용. 배포 DB 에는 반드시 이걸로 (서버리스는 자동 적용 안 함)
 npm test           # 파서·날짜 테스트 (node:test). 규칙을 고치면 반드시 돌릴 것
 npm run smoke      # dev 서버가 뜬 상태에서 홈이 200 인지. SQL 오류는 빌드가 못 잡는다
 ```

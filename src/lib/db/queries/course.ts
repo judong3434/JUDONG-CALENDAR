@@ -24,34 +24,35 @@ const toSemester = (r: SemesterRow): Semester => ({
   endDate: r.end_date,
 });
 
-export function listSemesters(): Semester[] {
-  return all<SemesterRow>(
+export async function listSemesters(): Promise<Semester[]> {
+  const rows = await all<SemesterRow>(
     "SELECT * FROM semester ORDER BY start_date DESC",
-  ).map(toSemester);
+  );
+  return rows.map(toSemester);
 }
 
 /** 오늘이 속한 학기. 없으면 가장 최근에 시작한 학기. 그것도 없으면 null. */
-export function currentSemester(today: string): Semester | null {
-  const inRange = get<SemesterRow>(
+export async function currentSemester(today: string): Promise<Semester | null> {
+  const inRange = await get<SemesterRow>(
     "SELECT * FROM semester WHERE ? BETWEEN start_date AND end_date ORDER BY start_date DESC LIMIT 1",
     today,
   );
   if (inRange) return toSemester(inRange);
 
-  const latest = get<SemesterRow>(
+  const latest = await get<SemesterRow>(
     "SELECT * FROM semester ORDER BY start_date DESC LIMIT 1",
   );
   return latest ? toSemester(latest) : null;
 }
 
-export function getSemester(id: string): Semester | null {
-  const r = get<SemesterRow>("SELECT * FROM semester WHERE id = ?", id);
+export async function getSemester(id: string): Promise<Semester | null> {
+  const r = await get<SemesterRow>("SELECT * FROM semester WHERE id = ?", id);
   return r ? toSemester(r) : null;
 }
 
-export function insertSemester(s: Omit<Semester, "id">): string {
+export async function insertSemester(s: Omit<Semester, "id">): Promise<string> {
   const id = newId();
-  run(
+  await run(
     "INSERT INTO semester (id, name, start_date, end_date) VALUES (?, ?, ?, ?)",
     id,
     s.name,
@@ -62,8 +63,8 @@ export function insertSemester(s: Omit<Semester, "id">): string {
 }
 
 /** 시작·종료일을 여기 한 곳에서만 고치면 전개 결과가 통째로 따라온다. */
-export function updateSemester(s: Semester): void {
-  run(
+export async function updateSemester(s: Semester): Promise<void> {
+  await run(
     `UPDATE semester
         SET name = ?, start_date = ?, end_date = ?, updated_at = datetime('now')
       WHERE id = ?`,
@@ -75,8 +76,8 @@ export function updateSemester(s: Semester): void {
 }
 
 /** 수업은 CASCADE 로 함께 사라진다. 학기를 지운다는 건 그 시간표를 지운다는 뜻이다. */
-export function deleteSemester(id: string): void {
-  run("DELETE FROM semester WHERE id = ?", id);
+export async function deleteSemester(id: string): Promise<void> {
+  await run("DELETE FROM semester WHERE id = ?", id);
 }
 
 /* ------------------------------------------------------------------- 수업 */
@@ -126,11 +127,12 @@ const COURSE_SELECT = `
     LEFT JOIN project p ON p.id = c.project_id
 `;
 
-export function listCourses(semesterId: string): Course[] {
-  return all<CourseRow>(
+export async function listCourses(semesterId: string): Promise<Course[]> {
+  const rows = await all<CourseRow>(
     `${COURSE_SELECT} WHERE c.semester_id = ? ORDER BY c.day_of_week, c.start_time`,
     semesterId,
-  ).map(toCourse);
+  );
+  return rows.map(toCourse);
 }
 
 export interface NewCourse {
@@ -142,9 +144,9 @@ export interface NewCourse {
   room?: string | null;
 }
 
-export function insertCourse(c: NewCourse): string {
+export async function insertCourse(c: NewCourse): Promise<string> {
   const id = newId();
-  run(
+  await run(
     `INSERT INTO course (id, name, semester_id, day_of_week, start_time, end_time, room)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     id,
@@ -158,8 +160,8 @@ export function insertCourse(c: NewCourse): string {
   return id;
 }
 
-export function deleteCourse(id: string): void {
-  run("DELETE FROM course WHERE id = ?", id);
+export async function deleteCourse(id: string): Promise<void> {
+  await run("DELETE FROM course WHERE id = ?", id);
 }
 
 /* --------------------------------------------------------------- 전개(展開)
@@ -179,8 +181,11 @@ export interface CourseInstance extends Course {
  * 학기 범위와 겹치는 수업만 한 번에 읽어 오고, 날짜 순회는 여기서 한다.
  * 날짜 × 요일 매칭을 SQL 로 밀어 넣으면 읽기 어려워지기만 한다.
  */
-export function expandCourses(from: string, to: string): CourseInstance[] {
-  const rows = all<CourseRow & { start_date: string; end_date: string }>(
+export async function expandCourses(
+  from: string,
+  to: string,
+): Promise<CourseInstance[]> {
+  const rows = await all<CourseRow & { start_date: string; end_date: string }>(
     `SELECT c.*, p.category AS project_category, p.shade AS project_shade,
             s.start_date, s.end_date
        FROM course c
@@ -224,6 +229,6 @@ export function expandCourses(from: string, to: string): CourseInstance[] {
 }
 
 /** 오늘 수업. (기획서 §4.1 ② "오늘 수업 — 시간표에서 자동으로 끌어옴") */
-export function listCoursesOn(date: string): CourseInstance[] {
+export function listCoursesOn(date: string): Promise<CourseInstance[]> {
   return expandCourses(date, date);
 }

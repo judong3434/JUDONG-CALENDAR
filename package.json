@@ -9,9 +9,12 @@
     "lint": "eslint",
     "db:reset": "node -e \"require('fs').rmSync('data',{recursive:true,force:true});console.log('data/ 삭제됨')\"",
     "test": "node --test \"src/**/*.test.ts\"",
-    "smoke": "node -e \"fetch(process.env.SMOKE_URL||'http://localhost:3000').then(r=>{console.log('status',r.status);process.exit(r.ok?0:1)}).catch(()=>{console.error('dev 서버가 안 떠 있습니다');process.exit(1)})\""
+    "smoke": "node -e \"fetch(process.env.SMOKE_URL||'http://localhost:3000').then(r=>{console.log('status',r.status);process.exit(r.ok?0:1)}).catch(()=>{console.error('dev 서버가 안 떠 있습니다');process.exit(1)})\"",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "db:push-data": "node --env-file-if-exists=.env.local scripts/push-data.mjs"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "lucide-react": "^1.35.0",
     "next": "16.3.3",
     "react": "19.2.8",

@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import type { Course, Semester } from "@/lib/db/queries/course";
 import { createCourse, deleteCourse } from "@/lib/actions/course";
 import { projectColor } from "@/lib/design/category";
+import { ConfirmDelete } from "@/components/ConfirmDelete";
 import {
   DAYS,
   SLOT_COUNT,
@@ -201,7 +202,6 @@ function CourseBlock({
   top: number;
   height: number;
 }) {
-  const [pending, startTransition] = useTransition();
   const color = course.projectCategory
     ? projectColor(course.projectCategory, course.projectShade ?? 1)
     : null;
@@ -213,9 +213,7 @@ function CourseBlock({
     <div
       style={{ top, height }}
       title={course.room ? `${course.name} · ${course.room}` : course.name}
-      className={`absolute inset-x-0.5 overflow-hidden rounded-c border border-c-line bg-c-surface ${
-        pending ? "opacity-40" : ""
-      }`}
+      className="absolute inset-x-0.5 overflow-hidden rounded-c border border-c-line bg-c-surface"
       data-anim
     >
       {/* 프로젝트 색 — 왼쪽 세로 막대. 점보다 자리를 덜 먹는다. */}
@@ -227,21 +225,19 @@ function CourseBlock({
         />
       )}
 
-      {/* 격자 위에는 두 번 누르기 UI 를 넣을 자리가 없다.
-          수업은 다시 드래그해 넣으면 그만이라 한 번에 지운다. */}
-      <button
-        type="button"
+      {/* 다른 화면과 마찬가지로 두 번 눌러야 지워진다.
+          × 가 과목명 바로 옆에 붙어 있어서 한 번에 지우면 잘못 누르기 쉽다.
+          pointerdown 을 막지 않으면 버튼을 누르는 순간 격자 드래그가 시작된다. */}
+      <span
+        className="absolute right-0 top-0 z-10"
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={() =>
-          startTransition(async () => {
-            await deleteCourse(course.id);
-          })
-        }
-        aria-label={`${course.name} 삭제`}
-        className="absolute right-0 top-0 z-10 px-1 text-[11px] leading-none text-c-text-faint hover:text-c-urgent"
       >
-        ×
-      </button>
+        <ConfirmDelete
+          onConfirm={() => deleteCourse(course.id)}
+          label="삭제"
+          size={12}
+        />
+      </span>
 
       <div className={`py-0.5 pr-3.5 ${color ? "pl-1.5" : "pl-1"}`}>
         {/* truncate 를 쓰지 않는다 — white-space:nowrap 이 걸려 한 줄로 잘린다.

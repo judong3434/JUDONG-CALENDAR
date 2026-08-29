@@ -22,20 +22,25 @@ import { formatDateKo } from "@/lib/format";
  */
 export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
   // 하루의 기준을 한 번만 정하고 전부 여기서 파생시킨다.
   // 렌더 도중 자정을 넘겨 섹션마다 날짜가 달라지는 일이 없게.
   const today = todayISO();
   const week = weekOf(today);
 
-  const projects = listProjectOptions();
-  const cards = listProjectCards(today);
-  const tasks = listTodayTasks(today);
-  // 일정과 수업을 시간순으로 한 줄에 섞는다
-  const events = listDayItems(today, today);
-  const ddays = listUpcomingDdays(today);
-  const dots = listEventDots(week[0], week[6]);
-  const inbox = listInbox();
+  // 서로를 기다릴 이유가 없는 조회들이다. 원격 DB 에서는 왕복 횟수가 곧 체감 속도다.
+  const [projects, cards, tasks, events, ddays, dots, inbox, inboxN] =
+    await Promise.all([
+      listProjectOptions(),
+      listProjectCards(today),
+      listTodayTasks(today),
+      // 일정과 수업을 시간순으로 한 줄에 섞는다
+      listDayItems(today, today),
+      listUpcomingDdays(today),
+      listEventDots(week[0], week[6]),
+      listInbox(),
+      inboxCount(),
+    ]);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
@@ -65,7 +70,7 @@ export default function Home() {
           <WeekStrip week={week} dots={dots} today={today} />
         </Section>
 
-        <Section title="Inbox" count={inboxCount()}>
+        <Section title="Inbox" count={inboxN}>
           <InboxList items={inbox} />
         </Section>
     </main>

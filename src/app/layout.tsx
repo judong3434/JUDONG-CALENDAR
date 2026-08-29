@@ -20,10 +20,10 @@ export const viewport: Viewport = {
 // 여기서 DB 를 읽으므로 정적으로 굳으면 안 된다.
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Quick Capture 는 layout 에 있다 — "입력창은 앱 어디에서나 열린다"(기획서 §2 원칙 하나).
   // 캘린더를 보다가도 Space 한 번이면 바로 던질 수 있어야 한다.
-  const projects = listProjectOptions();
+  const projects = await listProjectOptions();
 
   return (
     <html lang="ko" className="h-full">

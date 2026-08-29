@@ -14,10 +14,17 @@ import { expandCourses } from "@/lib/db/queries/course";
  * 수업은 course 테이블의 실제 행이 아니라 학기 범위에서 계산된 인스턴스다.
  * 그래서 id 에 날짜를 붙여 유일하게 만들고, 삭제 버튼은 붙이지 않는다.
  */
-export function listDayItems(from: string, to: string): EventItem[] {
-  const events = listEventsInRange(from, to);
+export async function listDayItems(
+  from: string,
+  to: string,
+): Promise<EventItem[]> {
+  // 두 조회는 서로를 기다릴 이유가 없다
+  const [events, expanded] = await Promise.all([
+    listEventsInRange(from, to),
+    expandCourses(from, to),
+  ]);
 
-  const courses: EventItem[] = expandCourses(from, to).map((c) => ({
+  const courses: EventItem[] = expanded.map((c) => ({
     // 같은 수업이 여러 날에 나타나므로 날짜까지 넣어야 키가 겹치지 않는다
     id: `course:${c.id}:${c.date}`,
     title: c.name,

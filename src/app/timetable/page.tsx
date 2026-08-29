@@ -13,11 +13,11 @@ import { todayISO } from "@/lib/date";
  */
 export const dynamic = "force-dynamic";
 
-export default function TimetablePage() {
+export default async function TimetablePage() {
   const today = todayISO();
-  const semester = currentSemester(today);
-  const courses = semester ? listCourses(semester.id) : [];
-  const semesters = listSemesters();
+  const semester = await currentSemester(today);
+  const courses = semester ? await listCourses(semester.id) : [];
+  const semesters = await listSemesters();
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">

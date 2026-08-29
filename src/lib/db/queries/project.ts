@@ -36,8 +36,8 @@ export interface ProjectCard extends Project {
   nextDate: string | null;
 }
 
-export function listProjectCards(today: string): ProjectCard[] {
-  const rows = all<ProjectRow & { next_event_date: string | null }>(
+export async function listProjectCards(today: string): Promise<ProjectCard[]> {
+  const rows = await all<ProjectRow & { next_event_date: string | null }>(
     `SELECT p.*,
             (SELECT MIN(e.date)
                FROM event e
@@ -55,14 +55,14 @@ export function listProjectCards(today: string): ProjectCard[] {
 }
 
 /** Quick Capture 의 프로젝트 선택용. 색을 칠하려면 category·shade 가 필요하다. */
-export function listProjectOptions(): Pick<
-  Project,
-  "id" | "name" | "category" | "shade"
->[] {
-  return all<ProjectRow>(
+export async function listProjectOptions(): Promise<
+  Pick<Project, "id" | "name" | "category" | "shade">[]
+> {
+  const rows = await all<ProjectRow>(
     `SELECT id, name, category, shade, status, due_date, stage, sort_order
        FROM project WHERE status <> 'done' ORDER BY sort_order, rowid`,
-  ).map(toProject);
+  );
+  return rows.map(toProject);
 }
 
 export interface NewProject {
@@ -70,22 +70,22 @@ export interface NewProject {
   category: Category;
 }
 
-export function insertProject(p: NewProject): string {
+export async function insertProject(p: NewProject): Promise<string> {
   // shade 는 자동 배정한다. 같은 카테고리 안에서 1→2→3→4→1 로 돌린다.
   // 사용자가 색을 고르게 하면 2단 색 체계가 곧바로 무너진다.
   const used =
-    get<{ n: number }>(
+    (await get<{ n: number }>(
       "SELECT COUNT(*) AS n FROM project WHERE category = ?",
       p.category,
-    )?.n ?? 0;
+    ))?.n ?? 0;
   const shade = (used % 4) + 1;
 
   const nextOrder =
-    (get<{ n: number | null }>("SELECT MAX(sort_order) AS n FROM project")?.n ??
-      0) + 1;
+    ((await get<{ n: number | null }>("SELECT MAX(sort_order) AS n FROM project"))
+      ?.n ?? 0) + 1;
 
   const id = newId();
-  run(
+  await run(
     `INSERT INTO project (id, name, category, shade, sort_order)
      VALUES (?, ?, ?, ?, ?)`,
     id,
@@ -101,12 +101,15 @@ export function insertProject(p: NewProject): string {
  * 프로젝트 삭제. 스키마상 event.project_id / task.project_id 는 ON DELETE SET NULL 이라
  * 일정과 할 일은 남고 소속만 풀린다. 프로젝트를 지웠다고 일정까지 날아가면 안 된다.
  */
-export function deleteProject(id: string): void {
-  run("DELETE FROM project WHERE id = ?", id);
+export async function deleteProject(id: string): Promise<void> {
+  await run("DELETE FROM project WHERE id = ?", id);
 }
 
-export function setProjectStatus(id: string, status: ProjectStatus): void {
-  run(
+export async function setProjectStatus(
+  id: string,
+  status: ProjectStatus,
+): Promise<void> {
+  await run(
     "UPDATE project SET status = ?, updated_at = datetime('now') WHERE id = ?",
     status,
     id,

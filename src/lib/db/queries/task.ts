@@ -1,4 +1,4 @@
-import { all, run, newId } from "../client";
+import { all, run, newId, type Stmt } from "../client";
 import type { Category } from "@/types/domain";
 
 /**
@@ -64,15 +64,16 @@ const TASK_SELECT = `
  * 그래서 지난 미완료도 함께 올린다 — 날짜는 화면에서 구분해 보여준다.
  * (밀린 것을 몰아서 재배치하는 주간 리뷰 화면은 기획서 P2)
  */
-export function listTodayTasks(today: string): TaskItem[] {
-  return all<TaskItemRow>(
+export async function listTodayTasks(today: string): Promise<TaskItem[]> {
+  const rows = await all<TaskItemRow>(
     `${TASK_SELECT}
       WHERE t.do_date IS NOT NULL
         AND (t.do_date = ? OR (t.do_date < ? AND t.done = 0))
       ORDER BY t.done, t.do_date, t.sort_order, t.rowid`,
     today,
     today,
-  ).map(toTaskItem);
+  );
+  return rows.map(toTaskItem);
 }
 
 export interface NewTask {
@@ -83,9 +84,9 @@ export interface NewTask {
   estMinutes?: number | null;
 }
 
-export function insertTask(t: NewTask): string {
+export async function insertTask(t: NewTask): Promise<string> {
   const id = newId();
-  run(
+  await run(
     `INSERT INTO task (id, title, do_date, project_id, event_id, est_minutes)
      VALUES (?, ?, ?, ?, ?, ?)`,
     id,
@@ -98,8 +99,8 @@ export function insertTask(t: NewTask): string {
   return id;
 }
 
-export function setTaskDone(id: string, done: boolean): void {
-  run(
+export async function setTaskDone(id: string, done: boolean): Promise<void> {
+  await run(
     `UPDATE task SET done = ?, done_at = ?, updated_at = datetime('now')
       WHERE id = ?`,
     done ? 1 : 0,
@@ -108,16 +109,16 @@ export function setTaskDone(id: string, done: boolean): void {
   );
 }
 
-export function setTaskDate(id: string, doDate: string | null): void {
-  run(
+export async function setTaskDate(id: string, doDate: string | null): Promise<void> {
+  await run(
     "UPDATE task SET do_date = ?, updated_at = datetime('now') WHERE id = ?",
     doDate,
     id,
   );
 }
 
-export function deleteTask(id: string): void {
-  run("DELETE FROM task WHERE id = ?", id);
+export async function deleteTask(id: string): Promise<void> {
+  await run("DELETE FROM task WHERE id = ?", id);
 }
 
 /**
@@ -125,17 +126,16 @@ export function deleteTask(id: string): void {
  * event_id 를 비우면 CASCADE 에 휩쓸리지 않고, 소속 프로젝트는 물려받는다.
  * (프로젝트가 이미 직접 달려 있으면 그대로 둔다)
  */
-export function detachTasksFromEvent(
+export function detachTasksFromEventStmt(
   eventId: string,
   projectId: string | null,
-): void {
-  run(
-    `UPDATE task
+): Stmt {
+  return {
+    sql: `UPDATE task
         SET event_id = NULL,
             project_id = COALESCE(project_id, ?),
             updated_at = datetime('now')
       WHERE event_id = ?`,
-    projectId,
-    eventId,
-  );
+    args: [projectId, eventId],
+  };
 }

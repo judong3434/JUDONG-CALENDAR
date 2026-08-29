@@ -1,4 +1,4 @@
-import { all, run, newId } from "../client";
+import { all, get, run, newId, type Stmt } from "../client";
 import type { Category, Event } from "@/types/domain";
 
 interface EventRow {
@@ -80,60 +80,78 @@ export interface NewEvent {
   captureId?: string | null;
 }
 
-export function insertEvent(e: NewEvent): string {
+/** 캡처와 한 트랜잭션에 묶이므로 문장만 만들어 돌려준다. */
+export function eventStmt(e: NewEvent): { id: string; stmt: Stmt } {
   const id = newId();
-  run(
-    `INSERT INTO event
-       (id, title, date, start_time, end_time, all_day, project_id, is_dday, capture_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  return {
     id,
-    e.title,
-    e.date,
-    e.startTime ?? null,
-    e.endTime ?? null,
-    // 시간이 없으면 종일 일정으로 본다
-    (e.allDay ?? !e.startTime) ? 1 : 0,
-    e.projectId ?? null,
-    e.isDday ? 1 : 0,
-    e.captureId ?? null,
-  );
-  return id;
+    stmt: {
+      sql: `INSERT INTO event
+              (id, title, date, start_time, end_time, all_day, project_id, is_dday, capture_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        id,
+        e.title,
+        e.date,
+        e.startTime ?? null,
+        e.endTime ?? null,
+        // 시간이 없으면 종일 일정으로 본다
+        (e.allDay ?? !e.startTime) ? 1 : 0,
+        e.projectId ?? null,
+        e.isDday ? 1 : 0,
+        e.captureId ?? null,
+      ],
+    },
+  };
+}
+
+export function deleteEventStmt(id: string): Stmt {
+  return { sql: "DELETE FROM event WHERE id = ?", args: [id] };
 }
 
 /** 오늘의 일정 — 시간순 타임라인. 종일 일정이 맨 위. */
-export function listEventsOn(date: string): EventItem[] {
-  return all<EventItemRow>(
+export async function listEventsOn(date: string): Promise<EventItem[]> {
+  const rows = await all<EventItemRow>(
     `${EVENT_SELECT}
       WHERE e.date = ?
       ORDER BY e.start_time IS NULL DESC, e.start_time`,
     date,
-  ).map(toEventItem);
+  );
+  return rows.map(toEventItem);
 }
 
 /**
  * D-day 스트립 — 가까운 순. 지난 것은 자동으로 빠진다.
  * (기획서 §4.1 ③ "지난 건 자동으로 사라짐")
  */
-export function listUpcomingDdays(today: string, limit = 12): EventItem[] {
-  return all<EventItemRow>(
+export async function listUpcomingDdays(
+  today: string,
+  limit = 12,
+): Promise<EventItem[]> {
+  const rows = await all<EventItemRow>(
     `${EVENT_SELECT}
       WHERE e.is_dday = 1 AND e.date >= ?
       ORDER BY e.date
       LIMIT ?`,
     today,
     limit,
-  ).map(toEventItem);
+  );
+  return rows.map(toEventItem);
 }
 
 /** 캘린더 — 기간 안의 일정 전부. 날짜순, 같은 날은 종일이 먼저. */
-export function listEventsInRange(from: string, to: string): EventItem[] {
-  return all<EventItemRow>(
+export async function listEventsInRange(
+  from: string,
+  to: string,
+): Promise<EventItem[]> {
+  const rows = await all<EventItemRow>(
     `${EVENT_SELECT}
       WHERE e.date BETWEEN ? AND ?
       ORDER BY e.date, e.start_time IS NULL DESC, e.start_time`,
     from,
     to,
-  ).map(toEventItem);
+  );
+  return rows.map(toEventItem);
 }
 
 /** 이번 주 미니 캘린더 — 날짜별로 색 점만 찍는다. 상세는 캘린더 탭에서. */
@@ -143,8 +161,8 @@ export interface DayDot {
   shade: number | null;
 }
 
-export function listEventDots(from: string, to: string): DayDot[] {
-  return all<{ date: string; category: Category | null; shade: number | null }>(
+export function listEventDots(from: string, to: string): Promise<DayDot[]> {
+  return all<DayDot>(
     `SELECT e.date, p.category, p.shade
        FROM event e LEFT JOIN project p ON p.id = e.project_id
       WHERE e.date BETWEEN ? AND ?
@@ -154,19 +172,11 @@ export function listEventDots(from: string, to: string): DayDot[] {
   );
 }
 
-export function getEvent(id: string): Event | null {
-  const rows = all<EventRow>("SELECT * FROM event WHERE id = ?", id);
-  return rows.length > 0 ? toEvent(rows[0]) : null;
+export async function getEvent(id: string): Promise<Event | null> {
+  const r = await get<EventRow>("SELECT * FROM event WHERE id = ?", id);
+  return r ? toEvent(r) : null;
 }
 
-export function setEventProject(id: string, projectId: string | null): void {
-  run(
-    "UPDATE event SET project_id = ?, updated_at = datetime('now') WHERE id = ?",
-    projectId,
-    id,
-  );
-}
-
-export function deleteEvent(id: string): void {
-  run("DELETE FROM event WHERE id = ?", id);
+export async function deleteEvent(id: string): Promise<void> {
+  await run("DELETE FROM event WHERE id = ?", id);
 }

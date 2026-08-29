@@ -17,21 +17,21 @@ export async function createProject(input: { name: string; category: string }) {
 
   // 최종 마감일은 받지 않는다. 카드의 D-day 는 그 프로젝트의 가장 가까운
   // 일정에서 나온다 — 마감을 두 군데에 적게 만들 이유가 없다.
-  insertProject({ name, category: input.category as Category });
+  await insertProject({ name, category: input.category as Category });
 
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 export async function completeProject(id: string) {
-  setProjectStatus(id, "done");
+  await setProjectStatus(id, "done");
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 /** 일정과 할 일은 남고 소속만 풀린다. 자세한 건 queries/project.ts 참고. */
 export async function deleteProject(id: string) {
-  removeProject(id);
+  await removeProject(id);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }

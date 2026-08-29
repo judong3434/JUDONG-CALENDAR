@@ -31,17 +31,17 @@ export async function saveSemester(input: {
   }
 
   if (input.id) {
-    if (!getSemester(input.id)) {
+    if (!(await getSemester(input.id))) {
       return { ok: false as const, error: "없는 학기" };
     }
-    updateSemester({
+    await updateSemester({
       id: input.id,
       name,
       startDate: input.startDate,
       endDate: input.endDate,
     });
   } else {
-    insertSemester({
+    await insertSemester({
       name,
       startDate: input.startDate,
       endDate: input.endDate,
@@ -54,7 +54,7 @@ export async function saveSemester(input: {
 
 /** 학기를 지우면 그 학기 수업도 CASCADE 로 같이 사라진다. */
 export async function deleteSemester(id: string) {
-  removeSemester(id);
+  await removeSemester(id);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
@@ -69,7 +69,7 @@ export async function createCourse(input: {
 }) {
   const name = input.name.trim();
   if (!name) return { ok: false as const, error: "과목명 없음" };
-  if (!getSemester(input.semesterId)) {
+  if (!(await getSemester(input.semesterId))) {
     return { ok: false as const, error: "없는 학기" };
   }
   if (input.dayOfWeek < 0 || input.dayOfWeek > 6) {
@@ -79,7 +79,7 @@ export async function createCourse(input: {
     return { ok: false as const, error: "끝나는 시각이 앞섭니다" };
   }
 
-  insertCourse({
+  await insertCourse({
     name,
     semesterId: input.semesterId,
     dayOfWeek: input.dayOfWeek,
@@ -93,7 +93,7 @@ export async function createCourse(input: {
 }
 
 export async function deleteCourse(id: string) {
-  removeCourse(id);
+  await removeCourse(id);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }

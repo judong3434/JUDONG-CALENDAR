@@ -16,7 +16,7 @@ export async function createTask(input: {
   const title = input.title.trim();
   if (!title) return { ok: false as const, error: "빈 할 일" };
 
-  insertTask({
+  await insertTask({
     title,
     doDate: input.doDate || null,
     projectId: input.projectId || null,
@@ -27,20 +27,20 @@ export async function createTask(input: {
 }
 
 export async function toggleTask(id: string, done: boolean) {
-  setTaskDone(id, done);
+  await setTaskDone(id, done);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 /** 밀린 할 일을 오늘로 끌어오거나 다른 날로 미룬다. */
 export async function rescheduleTask(id: string, doDate: string) {
-  setTaskDate(id, doDate || null);
+  await setTaskDate(id, doDate || null);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 export async function deleteTask(id: string) {
-  removeTask(id);
+  await removeTask(id);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }

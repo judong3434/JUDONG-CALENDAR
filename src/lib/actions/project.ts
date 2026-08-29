@@ -27,7 +27,7 @@ export async function createProject(input: {
     stage: STAGES[0],
   });
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
@@ -43,12 +43,12 @@ export async function advanceProjectStage(id: string) {
   const next = STAGES[(idx + 1) % STAGES.length];
   setProjectStage(id, next);
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const, stage: next };
 }
 
 export async function completeProject(id: string) {
   setProjectStatus(id, "done");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }

@@ -56,3 +56,43 @@ export function weekOf(iso: string): string[] {
 export function dayOfMonth(iso: string): number {
   return Number(iso.slice(8, 10));
 }
+
+/* ------------------------------------------------------------------ 월 단위
+   월은 'YYYY-MM' 문자열로 다룬다. URL 쿼리에 그대로 실을 수 있고,
+   비교도 사전순으로 된다. */
+
+export function monthOf(iso: string): string {
+  return iso.slice(0, 7);
+}
+
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split("-").map(Number);
+  // Date 에 맡기면 1월 -1 같은 경계를 알아서 넘긴다
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function isInMonth(iso: string, month: string): boolean {
+  return iso.startsWith(month);
+}
+
+/**
+ * 월간 그리드에 깔 날짜 전부.
+ *
+ * 그 달 1일이 속한 주의 월요일부터, 말일이 속한 주의 일요일까지.
+ * 앞뒤로 이전/다음 달 날짜가 딸려 오는 게 정상이다 — 그래야 주가 안 끊긴다.
+ * 길이는 항상 7의 배수(28·35·42)다.
+ */
+export function monthGridDates(month: string): string[] {
+  const first = `${month}-01`;
+  const [y, m] = month.split("-").map(Number);
+  const lastDay = new Date(y, m, 0).getDate(); // 다음 달 0일 = 이번 달 말일
+  const last = `${month}-${String(lastDay).padStart(2, "0")}`;
+
+  const start = weekOf(first)[0];
+  const end = weekOf(last)[6];
+
+  const out: string[] = [];
+  for (let d = start; d <= end; d = addDaysISO(d, 1)) out.push(d);
+  return out;
+}

@@ -118,6 +118,17 @@ export function listUpcomingDdays(today: string, limit = 12): EventItem[] {
   ).map(toEventItem);
 }
 
+/** 캘린더 — 기간 안의 일정 전부. 날짜순, 같은 날은 종일이 먼저. */
+export function listEventsInRange(from: string, to: string): EventItem[] {
+  return all<EventItemRow>(
+    `${EVENT_SELECT}
+      WHERE e.date BETWEEN ? AND ?
+      ORDER BY e.date, e.start_time IS NULL DESC, e.start_time`,
+    from,
+    to,
+  ).map(toEventItem);
+}
+
 /** 이번 주 미니 캘린더 — 날짜별로 색 점만 찍는다. 상세는 캘린더 탭에서. */
 export interface DayDot {
   date: string;

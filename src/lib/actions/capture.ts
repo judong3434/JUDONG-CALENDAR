@@ -52,7 +52,7 @@ export async function saveCapture(input: ConfirmedCapture) {
     });
   });
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const, kind: date ? ("event" as const) : ("inbox" as const) };
 }
 
@@ -80,12 +80,12 @@ export async function scheduleInboxItem(
     markResolved(captureId);
   });
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 export async function discardCapture(captureId: string) {
   removeCapture(captureId);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }

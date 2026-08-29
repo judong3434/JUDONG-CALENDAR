@@ -9,6 +9,12 @@ export function formatDateKo(iso: string): string {
   return `${m}월 ${d}일 (${w})`;
 }
 
+/** '2026-09' → '2026년 9월' */
+export function formatMonthKo(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return `${y}년 ${m}월`;
+}
+
 /** 시작·종료 → 15:00–17:00 / 시간이 없으면 종일 */
 export function formatTimeRange(
   start: string | null,

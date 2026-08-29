@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { QuickCapture } from "@/components/QuickCapture";
+import { Nav } from "@/components/Nav";
+import { listProjectOptions } from "@/lib/db/queries/project";
 
 export const metadata: Metadata = {
   title: "Studio",
@@ -14,7 +17,14 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
+// 여기서 DB 를 읽으므로 정적으로 굳으면 안 된다.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // Quick Capture 는 layout 에 있다 — "입력창은 앱 어디에서나 열린다"(기획서 §2 원칙 하나).
+  // 캘린더를 보다가도 Space 한 번이면 바로 던질 수 있어야 한다.
+  const projects = listProjectOptions();
+
   return (
     <html lang="ko" className="h-full">
       <head>
@@ -23,7 +33,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <QuickCapture projects={projects} nav={<Nav />} />
+        {children}
+      </body>
     </html>
   );
 }

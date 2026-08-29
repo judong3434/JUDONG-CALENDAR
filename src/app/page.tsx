@@ -1,4 +1,3 @@
-import { QuickCapture } from "@/components/QuickCapture";
 import { InboxList } from "@/components/InboxList";
 import { TodoList } from "@/components/dashboard/TodoList";
 import { TodayEvents } from "@/components/dashboard/TodayEvents";
@@ -38,10 +37,7 @@ export default function Home() {
   const inbox = listInbox();
 
   return (
-    <>
-      <QuickCapture projects={projects} />
-
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
         <header className="mb-6">
           <h1 className="text-sm font-semibold text-c-text-strong">
             {formatDateKo(today)}
@@ -71,8 +67,7 @@ export default function Home() {
         <Section title="Inbox" count={inboxCount()}>
           <InboxList items={inbox} />
         </Section>
-      </main>
-    </>
+    </main>
   );
 }
 

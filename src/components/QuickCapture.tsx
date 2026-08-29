@@ -28,7 +28,14 @@ interface Overrides {
   endTime?: string;
 }
 
-export function QuickCapture({ projects }: { projects: ProjectOption[] }) {
+export function QuickCapture({
+  projects,
+  nav,
+}: {
+  projects: ProjectOption[];
+  /** 화면 전환 링크. 입력줄과 같은 높이에 두어 세로 공간을 더 쓰지 않는다. */
+  nav?: React.ReactNode;
+}) {
   const [raw, setRaw] = useState("");
   const [overrides, setOverrides] = useState<Overrides>({});
   // 프로젝트와 D-day 는 파싱 결과가 아니라 사용자가 직접 고르는 값이다.
@@ -124,6 +131,7 @@ export function QuickCapture({ projects }: { projects: ProjectOption[] }) {
             spellCheck={false}
             className="min-w-0 flex-1 bg-transparent text-c-text-strong outline-none placeholder:text-c-text-faint"
           />
+          {nav}
           {raw ? (
             <button
               type="submit"

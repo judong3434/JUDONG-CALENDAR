@@ -80,6 +80,7 @@ id 는 TEXT(uuid), 날짜/시간은 `'YYYY-MM-DD'` / `'HH:MM'` 문자열, 불리
 ## 구조
 
 ```
+src/app/            / 홈 대시보드, /calendar 월간·주간 캘린더
 db/migrations/     스키마. 파일명 순서가 곧 적용 순서.
 data/              SQLite 파일 (gitignore). 서버 첫 요청 때 자동 생성·마이그레이션.
 src/app/           라우트
@@ -95,7 +96,7 @@ src/types/         도메인 타입 (DB 스키마와 1:1)
 - [x] 0. 스키마 + 프로젝트 구조
 - [x] 1. Quick Capture + Inbox (파싱은 날짜/시간만)
 - [x] 2. 홈 대시보드
-- [ ] 3. 월간 캘린더 + 색 체계
+- [x] 3. 월간 캘린더 + 색 체계
 - [ ] 4. 시간표
 - [ ] 5. 파싱 고도화 + 러닝 로그
 

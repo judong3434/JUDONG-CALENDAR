@@ -22,25 +22,25 @@ export async function createTask(input: {
     projectId: input.projectId || null,
   });
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 export async function toggleTask(id: string, done: boolean) {
   setTaskDone(id, done);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 /** 밀린 할 일을 오늘로 끌어오거나 다른 날로 미룬다. */
 export async function rescheduleTask(id: string, doDate: string) {
   setTaskDate(id, doDate || null);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 export async function deleteTask(id: string) {
   removeTask(id);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }

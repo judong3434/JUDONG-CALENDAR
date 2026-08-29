@@ -40,7 +40,8 @@ export async function saveCapture(input: ConfirmedCapture) {
       title: input.title.trim() || raw,
       date,
       startTime: input.startTime || null,
-      endTime: input.endTime || null,
+      // 시작 없이 종료만 있는 건 일정이 아니다
+      endTime: input.startTime ? input.endTime || null : null,
       allDay: !input.startTime,
       captureId,
     });
@@ -55,6 +56,7 @@ export async function scheduleInboxItem(
   captureId: string,
   date: string,
   startTime: string | null,
+  endTime: string | null,
 ) {
   const capture = getCapture(captureId);
   if (!capture) return { ok: false as const, error: "없는 캡처" };
@@ -65,6 +67,8 @@ export async function scheduleInboxItem(
       title: capture.rawText,
       date,
       startTime: startTime || null,
+      // 시작 없이 종료만 있는 건 일정이 아니다
+      endTime: startTime ? endTime || null : null,
       allDay: !startTime,
       captureId,
     });

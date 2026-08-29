@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CornerDownLeft, Inbox } from "lucide-react";
 import { parseCapture } from "@/lib/parse";
-import { formatDateKo } from "@/lib/format";
+import { formatDateKo, formatTimeRange } from "@/lib/format";
 import { saveCapture } from "@/lib/actions/capture";
 
 /**
@@ -142,7 +142,7 @@ export function QuickCapture() {
                   />
                 </Field>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <Field label="날짜">
                     <input
                       type="date"
@@ -153,9 +153,16 @@ export function QuickCapture() {
                       className="bg-transparent text-sm text-c-text-strong outline-none"
                     />
                   </Field>
-                  <Field label="시간">
+
+                  {/* 시작–종료. "10시부터 18시까지" 같은 일정은 끝나는 시각이 있어야 한다.
+                      input 두 개라 label 로 감싸지 않고 aria-label 을 각각 준다. */}
+                  <div className="flex items-baseline gap-2">
+                    <span className="shrink-0 text-[11px] text-c-text-faint">
+                      시간
+                    </span>
                     <input
                       type="time"
+                      aria-label="시작 시각"
                       value={draft.startTime}
                       onChange={(e) =>
                         setOverrides((o) => ({
@@ -165,7 +172,17 @@ export function QuickCapture() {
                       }
                       className="bg-transparent text-sm text-c-text-strong outline-none"
                     />
-                  </Field>
+                    <span className="text-c-text-faint">–</span>
+                    <input
+                      type="time"
+                      aria-label="종료 시각"
+                      value={draft.endTime}
+                      onChange={(e) =>
+                        setOverrides((o) => ({ ...o, endTime: e.target.value }))
+                      }
+                      className="bg-transparent text-sm text-c-text-strong outline-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -179,8 +196,8 @@ export function QuickCapture() {
               ) : (
                 <>
                   <span className="text-c-text-muted">
-                    {formatDateKo(draft.date)}
-                    {draft.startTime ? ` ${draft.startTime}` : " 종일"}
+                    {formatDateKo(draft.date)}{" "}
+                    {formatTimeRange(draft.startTime || null, draft.endTime || null)}
                   </span>
                   <span className="text-c-line-strong">·</span>
                   Enter 로 저장, Tab 으로 수정

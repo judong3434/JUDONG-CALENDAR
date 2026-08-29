@@ -91,6 +91,25 @@ test("시간 표기", async (t) => {
     assert.equal(r.endTime, "16:00");
   });
 
+  await t.test("범위 — 10시부터 18시까지 (긴 하루 일정)", () => {
+    const r = p("내일 10시부터 18시까지 알바");
+    assert.equal(r.startTime, "10:00");
+    assert.equal(r.endTime, "18:00");
+    assert.equal(r.title, "알바");
+  });
+
+  await t.test("범위 — 10-18시", () => {
+    const r = p("내일 10-18시 워크샵");
+    assert.equal(r.startTime, "10:00");
+    assert.equal(r.endTime, "18:00");
+  });
+
+  await t.test("범위 — 끝 시각이 앞서면 오후로 넘긴다 (10시-6시)", () => {
+    const r = p("내일 10시-6시 촬영");
+    assert.equal(r.startTime, "10:00");
+    assert.equal(r.endTime, "18:00");
+  });
+
   await t.test("범위 — 저녁 7시부터 9시까지", () => {
     const r = p("내일 저녁 7시부터 9시까지 스터디");
     assert.equal(r.startTime, "19:00");

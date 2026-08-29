@@ -36,13 +36,19 @@ export function InboxList({ items }: { items: Capture[] }) {
 
 function InboxRow({ item }: { item: Capture }) {
   const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [pending, startTransition] = useTransition();
 
   function schedule() {
     if (!date || pending) return;
     startTransition(async () => {
-      await scheduleInboxItem(item.id, date, time || null);
+      await scheduleInboxItem(
+        item.id,
+        date,
+        startTime || null,
+        endTime || null,
+      );
     });
   }
 
@@ -76,8 +82,18 @@ function InboxRow({ item }: { item: Capture }) {
         />
         <input
           type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
+          aria-label="시작 시각"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && schedule()}
+          className="rounded-c border border-c-line bg-c-bg px-2 py-1 text-xs text-c-text outline-none focus:border-c-line-strong"
+        />
+        <span className="text-xs text-c-text-faint">–</span>
+        <input
+          type="time"
+          aria-label="종료 시각"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && schedule()}
           className="rounded-c border border-c-line bg-c-bg px-2 py-1 text-xs text-c-text outline-none focus:border-c-line-strong"
         />

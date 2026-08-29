@@ -29,7 +29,9 @@ interface Selection {
   to: number;
 }
 
-const SLOT_H = 18; // px
+// 30분 한 칸의 높이. 11px 글자 한 줄(약 14px)과 안쪽 여백이 들어가야 하므로
+// 18px 로는 30분짜리 수업의 이름이 잘린다.
+const SLOT_H = 22; // px
 
 export function TimetableGrid({
   semester,
@@ -80,7 +82,9 @@ export function TimetableGrid({
   return (
     <div>
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="min-w-[560px]">
+        {/* 요일이 7열이라 좁으면 한글 과목명이 곧바로 접힌다.
+            좁은 화면에서는 가로로 스크롤되게 두고 열 너비를 확보한다. */}
+        <div className="min-w-[700px]">
           {/* 요일 머리글 */}
           <div className="grid grid-cols-[40px_repeat(7,1fr)] border-b border-c-line pb-1">
             <div />
@@ -180,6 +184,14 @@ export function TimetableGrid({
   );
 }
 
+/**
+ * 격자 위의 수업 한 칸.
+ *
+ * 요일 열은 좁다(7열). 그래서 제목을 한 줄로 두면 "제품디…"처럼 곧바로 잘린다.
+ * 칸은 세로로는 남으므로 줄바꿈을 허용해 아래로 흐르게 한다.
+ * 색 점과 삭제 버튼은 글자와 가로폭을 다투지 않도록 띄워서 얹는다 —
+ * 좁은 칸에서 몇 픽셀이 한 글자를 좌우한다.
+ */
 function CourseBlock({
   course,
   top,
@@ -194,46 +206,55 @@ function CourseBlock({
     ? projectColor(course.projectCategory, course.projectShade ?? 1)
     : null;
 
+  // 한 줄(약 13px)과 안쪽 여백을 빼고 강의실을 적을 자리가 남는지
+  const roomFits = height >= SLOT_H * 2;
+
   return (
     <div
       style={{ top, height }}
-      className={`absolute inset-x-0.5 overflow-hidden rounded-c border border-c-line bg-c-surface px-1 py-0.5 ${
+      title={course.room ? `${course.name} · ${course.room}` : course.name}
+      className={`absolute inset-x-0.5 overflow-hidden rounded-c border border-c-line bg-c-surface ${
         pending ? "opacity-40" : ""
       }`}
       data-anim
     >
-      <div className="flex items-start gap-1">
-        {color && (
-          <span
-            className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ background: color }}
-            aria-hidden
-          />
-        )}
-        <span className="min-w-0 flex-1 truncate text-[11px] leading-tight text-c-text-strong">
-          {course.name}
-        </span>
-        {/* 격자 위에서는 두 번 누르기 UI 를 넣을 자리가 없다.
-            수업은 다시 드래그해 넣으면 그만이라 한 번에 지운다. */}
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() =>
-            startTransition(async () => {
-              await deleteCourse(course.id);
-            })
-          }
-          aria-label={`${course.name} 삭제`}
-          className="shrink-0 px-0.5 text-[11px] leading-none text-c-text-faint hover:text-c-urgent"
-        >
-          ×
-        </button>
-      </div>
-      {course.room && height > SLOT_H * 1.5 && (
-        <div className="truncate text-[10px] leading-tight text-c-text-faint">
-          {course.room}
-        </div>
+      {/* 프로젝트 색 — 왼쪽 세로 막대. 점보다 자리를 덜 먹는다. */}
+      {color && (
+        <span
+          className="absolute inset-y-0 left-0 w-[3px]"
+          style={{ background: color }}
+          aria-hidden
+        />
       )}
+
+      {/* 격자 위에는 두 번 누르기 UI 를 넣을 자리가 없다.
+          수업은 다시 드래그해 넣으면 그만이라 한 번에 지운다. */}
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() =>
+          startTransition(async () => {
+            await deleteCourse(course.id);
+          })
+        }
+        aria-label={`${course.name} 삭제`}
+        className="absolute right-0 top-0 z-10 px-1 text-[11px] leading-none text-c-text-faint hover:text-c-urgent"
+      >
+        ×
+      </button>
+
+      <div className={`py-0.5 pr-3.5 ${color ? "pl-1.5" : "pl-1"}`}>
+        {/* truncate 를 쓰지 않는다 — white-space:nowrap 이 걸려 한 줄로 잘린다.
+            break-words 는 공백 없는 긴 영문 과목명까지 접어 준다. */}
+        <p className="break-words text-[11px] leading-[1.25] text-c-text-strong">
+          {course.name}
+        </p>
+        {course.room && roomFits && (
+          <p className="break-words text-[10px] leading-[1.25] text-c-text-faint">
+            {course.room}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

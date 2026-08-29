@@ -27,36 +27,21 @@ function toProject(r: ProjectRow): Project {
 
 /**
  * 프로젝트 보드 카드 하나에 필요한 전부.
- * "내가 지금 뭘 하고 있는지 눈에 보여야 안심된다"에 대응하는 값들이다.
+ *
+ * 진행률(완료 Task ÷ 전체 Task)은 화면에서 뺐으므로 세지 않는다.
+ * 안 보여줄 숫자를 위해 Task 를 두 번 훑을 이유가 없다.
  */
 export interface ProjectCard extends Project {
-  totalTasks: number;
-  doneTasks: number;
   /** 다음 마감까지. 프로젝트의 미래 일정 중 가장 가까운 것, 없으면 최종 마감일. */
   nextDate: string | null;
 }
 
 export function listProjectCards(today: string): ProjectCard[] {
-  // Task 는 프로젝트에 직접 달리거나 Event 를 거쳐 달린다.
-  // COALESCE 로 두 경로를 한 번에 센다.
-  const rows = all<
-    ProjectRow & {
-      total_tasks: number;
-      done_tasks: number;
-      next_event_date: string | null;
-    }
-  >(
+  const rows = all<ProjectRow & { next_event_date: string | null }>(
     `SELECT p.*,
-            (SELECT COUNT(*)
-               FROM task t LEFT JOIN event e ON e.id = t.event_id
-              WHERE COALESCE(t.project_id, e.project_id) = p.id) AS total_tasks,
-            (SELECT COUNT(*)
-               FROM task t LEFT JOIN event e ON e.id = t.event_id
-              WHERE COALESCE(t.project_id, e.project_id) = p.id
-                AND t.done = 1)                                  AS done_tasks,
             (SELECT MIN(e.date)
                FROM event e
-              WHERE e.project_id = p.id AND e.date >= ?)         AS next_event_date
+              WHERE e.project_id = p.id AND e.date >= ?) AS next_event_date
        FROM project p
       WHERE p.status <> 'done'
       ORDER BY p.sort_order, p.rowid`,
@@ -65,8 +50,6 @@ export function listProjectCards(today: string): ProjectCard[] {
 
   return rows.map((r) => ({
     ...toProject(r),
-    totalTasks: r.total_tasks,
-    doneTasks: r.done_tasks,
     nextDate: r.next_event_date ?? r.due_date,
   }));
 }
@@ -82,16 +65,9 @@ export function listProjectOptions(): Pick<
   ).map(toProject);
 }
 
-export function getProject(id: string): Project | null {
-  const r = get<ProjectRow>("SELECT * FROM project WHERE id = ?", id);
-  return r ? toProject(r) : null;
-}
-
 export interface NewProject {
   name: string;
   category: Category;
-  dueDate?: string | null;
-  stage?: string | null;
 }
 
 export function insertProject(p: NewProject): string {
@@ -110,25 +86,15 @@ export function insertProject(p: NewProject): string {
 
   const id = newId();
   run(
-    `INSERT INTO project (id, name, category, shade, due_date, stage, sort_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO project (id, name, category, shade, sort_order)
+     VALUES (?, ?, ?, ?, ?)`,
     id,
     p.name,
     p.category,
     shade,
-    p.dueDate ?? null,
-    p.stage ?? null,
     nextOrder,
   );
   return id;
-}
-
-export function setProjectStage(id: string, stage: string | null): void {
-  run(
-    "UPDATE project SET stage = ?, updated_at = datetime('now') WHERE id = ?",
-    stage,
-    id,
-  );
 }
 
 /**

@@ -8,7 +8,7 @@ import { WeekStrip } from "@/components/dashboard/WeekStrip";
 import { inboxCount, listInbox } from "@/lib/db/queries/capture";
 import { listEventDots, listEventsOn, listUpcomingDdays } from "@/lib/db/queries/event";
 import { listProjectCards, listProjectOptions } from "@/lib/db/queries/project";
-import { countOpenTasksByProject, listTodayTasks } from "@/lib/db/queries/task";
+import { listTodayTasks } from "@/lib/db/queries/task";
 import { todayISO, weekOf } from "@/lib/date";
 import { formatDateKo } from "@/lib/format";
 
@@ -29,7 +29,6 @@ export default function Home() {
 
   const projects = listProjectOptions();
   const cards = listProjectCards(today);
-  const openCounts = countOpenTasksByProject();
   const tasks = listTodayTasks(today);
   const events = listEventsOn(today);
   const ddays = listUpcomingDdays(today);
@@ -57,7 +56,7 @@ export default function Home() {
         </Section>
 
         <Section title="진행 중인 프로젝트" count={cards.length}>
-          <ProjectBoard cards={cards} openCounts={openCounts} today={today} />
+          <ProjectBoard cards={cards} today={today} />
         </Section>
 
         <Section title="이번 주">

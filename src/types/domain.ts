@@ -15,19 +15,6 @@ export type Category = (typeof CATEGORIES)[number];
 
 export type ProjectStatus = "active" | "waiting" | "done";
 
-/**
- * 프로젝트 단계. 진행률 퍼센트보다 "지금 뭘 하는 중인지"가 더 정확한 정보다.
- * 카드에서 클릭 한 번으로 다음 단계로 넘긴다. (기획서 §6)
- * 디자인 작업 프로세스가 거의 정형화돼 있어서 이 순서가 대체로 맞는다.
- */
-export const STAGES = [
-  "리서치",
-  "컨셉",
-  "시안",
-  "피드백 대기",
-  "수정",
-  "마감",
-] as const;
 export type CaptureStatus = "inbox" | "resolved" | "archived";
 
 export interface Project {

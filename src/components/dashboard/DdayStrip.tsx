@@ -2,6 +2,7 @@ import type { EventItem } from "@/lib/db/queries/event";
 import { ProjectDot } from "@/components/ProjectDot";
 import { ddayLabel, diffDays } from "@/lib/date";
 import { formatDateKo } from "@/lib/format";
+import { DeleteEventButton } from "@/components/DeleteButtons";
 
 /**
  * D-day 스트립 — 가로로 흐르는 카드 열. (기획서 §4.1 ③)
@@ -38,7 +39,7 @@ export function DdayStrip({
                 urgent ? "border-c-urgent/40" : "border-c-line"
               }`}
             >
-              <div className="flex items-baseline justify-between gap-2">
+              <div className="flex items-center justify-between gap-1">
                 <span
                   className={`text-sm font-semibold tabular-nums ${
                     urgent ? "text-c-urgent" : "text-c-text-strong"
@@ -46,11 +47,15 @@ export function DdayStrip({
                 >
                   {ddayLabel(e.date, today)}
                 </span>
-                <ProjectDot
-                  category={e.projectCategory}
-                  shade={e.projectShade}
-                  size={7}
-                />
+                <span className="flex items-center gap-1">
+                  <ProjectDot
+                    category={e.projectCategory}
+                    shade={e.projectShade}
+                    size={7}
+                  />
+                  {/* 다른 화면과 같은 동작 — 스트립에서만 빼는 게 아니라 일정을 지운다 */}
+                  <DeleteEventButton id={e.id} />
+                </span>
               </div>
               <p className="mt-1 line-clamp-2 text-xs text-c-text">{e.title}</p>
               <p className="mt-1 text-[11px] text-c-text-faint">

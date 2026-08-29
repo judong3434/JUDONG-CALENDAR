@@ -147,6 +147,11 @@ export function listEventDots(from: string, to: string): DayDot[] {
   );
 }
 
+export function getEvent(id: string): Event | null {
+  const rows = all<EventRow>("SELECT * FROM event WHERE id = ?", id);
+  return rows.length > 0 ? toEvent(rows[0]) : null;
+}
+
 export function setEventProject(id: string, projectId: string | null): void {
   run(
     "UPDATE event SET project_id = ?, updated_at = datetime('now') WHERE id = ?",

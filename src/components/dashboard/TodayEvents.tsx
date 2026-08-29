@@ -1,6 +1,7 @@
 import type { EventItem } from "@/lib/db/queries/event";
 import { ProjectDot } from "@/components/ProjectDot";
 import { formatTimeRange } from "@/lib/format";
+import { DeleteEventButton } from "@/components/DeleteButtons";
 
 /**
  * 오늘의 일정 — 시간순 타임라인. (기획서 §4.1 ②)
@@ -35,6 +36,7 @@ export function TodayEvents({ events }: { events: EventItem[] }) {
               {e.projectName}
             </span>
           )}
+          <DeleteEventButton id={e.id} />
         </li>
       ))}
     </ul>

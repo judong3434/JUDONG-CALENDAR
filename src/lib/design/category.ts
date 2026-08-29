@@ -22,8 +22,8 @@ export const CATEGORY: Record<Category, CategoryDef> = {
   school: {
     key: "school",
     label: "학교 · 수업",
-    hue: "Blue",
-    shades: ["#2f5fd0", "#4b7bdd", "#7fa3e8", "#aec5f0"],
+    hue: "Green",
+    shades: ["#2b8055", "#3d9a6a", "#6bb691", "#a0d0b6"],
   },
   personal: {
     key: "personal",
@@ -43,11 +43,14 @@ export const CATEGORY: Record<Category, CategoryDef> = {
     hue: "Amber",
     shades: ["#b8791a", "#cb9127", "#dbaf5e", "#e9cb96"],
   },
+  // 표시 이름만 KDM 으로 바꾼다. DB 에 저장되는 키는 'work' 그대로다 —
+  // 키를 바꾸려면 CHECK 제약과 기존 행을 함께 옮기는 마이그레이션이 필요한데,
+  // 이름과 색은 화면의 문제라 거기까지 갈 이유가 없다.
   work: {
     key: "work",
-    label: "알바 · 업무",
-    hue: "Green",
-    shades: ["#2b8055", "#3d9a6a", "#6bb691", "#a0d0b6"],
+    label: "KDM",
+    hue: "Blue",
+    shades: ["#2f5fd0", "#4b7bdd", "#7fa3e8", "#aec5f0"],
   },
   routine: {
     key: "routine",

@@ -7,6 +7,7 @@ import { CATEGORY_LIST, projectColor } from "@/lib/design/category";
 import { CATEGORIES } from "@/types/domain";
 import { advanceProjectStage, createProject } from "@/lib/actions/project";
 import { ddayLabel, diffDays } from "@/lib/date";
+import { DeleteProjectButton } from "@/components/DeleteButtons";
 
 /**
  * 진행 중인 프로젝트 보드. (기획서 §4.1 ④)
@@ -89,6 +90,7 @@ function Card({
             {ddayLabel(card.nextDate, today)}
           </span>
         )}
+        <DeleteProjectButton id={card.id} />
       </div>
 
       <div className="mt-2 flex items-center gap-2">

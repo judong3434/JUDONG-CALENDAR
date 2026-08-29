@@ -6,6 +6,7 @@ import {
   setProjectStage,
   setProjectStatus,
   getProject,
+  deleteProject as removeProject,
 } from "@/lib/db/queries/project";
 import { CATEGORIES, STAGES, type Category } from "@/types/domain";
 
@@ -49,6 +50,13 @@ export async function advanceProjectStage(id: string) {
 
 export async function completeProject(id: string) {
   setProjectStatus(id, "done");
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/** 일정과 할 일은 남고 소속만 풀린다. 자세한 건 queries/project.ts 참고. */
+export async function deleteProject(id: string) {
+  removeProject(id);
   revalidatePath("/", "layout");
   return { ok: true as const };
 }

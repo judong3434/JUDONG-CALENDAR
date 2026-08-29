@@ -132,3 +132,23 @@ export function setTaskDate(id: string, doDate: string | null): void {
 export function deleteTask(id: string): void {
   run("DELETE FROM task WHERE id = ?", id);
 }
+
+/**
+ * 일정을 지우기 직전에 그 일정의 할 일을 떼어낸다.
+ * event_id 를 비우면 CASCADE 에 휩쓸리지 않고, 소속 프로젝트는 물려받는다.
+ * (프로젝트가 이미 직접 달려 있으면 그대로 둔다)
+ */
+export function detachTasksFromEvent(
+  eventId: string,
+  projectId: string | null,
+): void {
+  run(
+    `UPDATE task
+        SET event_id = NULL,
+            project_id = COALESCE(project_id, ?),
+            updated_at = datetime('now')
+      WHERE event_id = ?`,
+    projectId,
+    eventId,
+  );
+}

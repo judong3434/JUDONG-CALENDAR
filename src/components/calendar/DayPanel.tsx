@@ -2,6 +2,7 @@ import type { EventItem } from "@/lib/db/queries/event";
 import { ProjectDot } from "@/components/ProjectDot";
 import { formatDateKo, formatTimeRange } from "@/lib/format";
 import { ddayLabel } from "@/lib/date";
+import { DeleteEventButton } from "@/components/DeleteButtons";
 
 /**
  * 날짜 상세. (기획서 §4.2 "날짜 클릭 → 우측 패널에 그날 상세")
@@ -57,6 +58,7 @@ export function DayPanel({
                     D-day
                   </span>
                 )}
+                <DeleteEventButton id={e.id} />
               </div>
               <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 pl-4 text-[11px] text-c-text-faint">
                 <span className="tabular-nums">

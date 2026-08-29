@@ -131,6 +131,14 @@ export function setProjectStage(id: string, stage: string | null): void {
   );
 }
 
+/**
+ * 프로젝트 삭제. 스키마상 event.project_id / task.project_id 는 ON DELETE SET NULL 이라
+ * 일정과 할 일은 남고 소속만 풀린다. 프로젝트를 지웠다고 일정까지 날아가면 안 된다.
+ */
+export function deleteProject(id: string): void {
+  run("DELETE FROM project WHERE id = ?", id);
+}
+
 export function setProjectStatus(id: string, status: ProjectStatus): void {
   run(
     "UPDATE project SET status = ?, updated_at = datetime('now') WHERE id = ?",

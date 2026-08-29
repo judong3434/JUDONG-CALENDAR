@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Studio 디자인 토큰 (브리프 「스타일 키워드」)
+   미니멀 · 낮은 채도 그레이스케일 · 높은 정보 밀도 · 색은 오직 분류를 위해서만
+
+   UI 전체는 무채색이다. 여기 --c-* 에는 유채색이 하나도 없다.
+   색은 카테고리 점 / 프로젝트 색 / D-day 경고에만 쓰이고,
+   그 값은 src/lib/design/category.ts 한 곳에서만 나온다.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* 무채색 스케일 — 배경에서 텍스트까지 */
+  --color-c-bg: #ffffff;
+  --color-c-surface: #fafafa;
+  --color-c-surface-2: #f4f4f5;
+  --color-c-line: #e4e4e7;
+  --color-c-line-strong: #d4d4d8;
+  --color-c-text-faint: #a1a1aa;
+  --color-c-text-muted: #71717a;
+  --color-c-text: #3f3f46;
+  --color-c-text-strong: #18181b;
+
+  /* D-day 임박 경고 — 색을 쓰는 세 군데 중 하나 */
+  --color-c-urgent: #c8392f;
+
+  /* radius 는 6px 하나로 통일 (브리프 「피하고 싶은 것」) */
+  --radius-c: 6px;
+
+  /* 4px 그리드 */
+  --spacing: 4px;
+
+  --font-sans:
+    Pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+@layer base {
+  html {
+    /* 밀도는 높게 */
+    font-size: 15px;
+  }
+
+  body {
+    background: var(--color-c-bg);
+    color: var(--color-c-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* 폰에서 가로 스크롤이 생기지 않게 */
+    overflow-x: hidden;
+  }
+
+  /* 모션 최소. 페이지 전환 애니메이션 없음.
+     상태 변화(체크·드래그)에만 150ms 이하 — 각 컴포넌트에서 명시적으로 준다. */
+  * {
+    transition-duration: 0ms;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-anim] {
+      transition-duration: 120ms;
+      transition-timing-function: ease-out;
+    }
+  }
+
+  /* 폰에서 입력창 포커스 시 브라우저가 확대하지 않도록 */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  @media (min-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: inherit;
+    }
+  }
+}

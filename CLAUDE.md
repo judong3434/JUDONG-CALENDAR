@@ -107,5 +107,6 @@ src/types/         도메인 타입 (DB 스키마와 1:1)
 ```
 npm run dev        # 0.0.0.0 바인딩 — 같은 와이파이의 폰에서도 접속된다
 npm run db:reset   # data/ 삭제. 다음 실행 때 스키마부터 다시 만든다
-npm test           # 파서 테스트 (node:test). 파싱 규칙을 고치면 반드시 돌릴 것
+npm test           # 파서·날짜 테스트 (node:test). 규칙을 고치면 반드시 돌릴 것
+npm run smoke      # dev 서버가 뜬 상태에서 홈이 200 인지. SQL 오류는 빌드가 못 잡는다
 ```

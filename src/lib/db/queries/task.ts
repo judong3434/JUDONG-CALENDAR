@@ -78,10 +78,12 @@ export function listTodayTasks(today: string): TaskItem[] {
 /** 프로젝트 카드의 "미완료 할 일 N개" — 날짜가 없는 것까지 전부 센다. */
 export function countOpenTasksByProject(): Record<string, number> {
   const rows = all<{ project_id: string; n: number }>(
+    // GROUP BY 에 별칭(project_id)을 쓰면 t.project_id / e.project_id 와 겹쳐
+    // "ambiguous column name" 이 난다. 식을 그대로 반복해야 한다.
     `SELECT COALESCE(t.project_id, e.project_id) AS project_id, COUNT(*) AS n
        FROM task t LEFT JOIN event e ON e.id = t.event_id
       WHERE t.done = 0 AND COALESCE(t.project_id, e.project_id) IS NOT NULL
-      GROUP BY project_id`,
+      GROUP BY COALESCE(t.project_id, e.project_id)`,
   );
   return Object.fromEntries(rows.map((r) => [r.project_id, r.n]));
 }

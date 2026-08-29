@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { CornerDownLeft, Inbox } from "lucide-react";
+import { CornerDownLeft, Flag, Inbox } from "lucide-react";
 import { parseCapture } from "@/lib/parse";
 import { formatDateKo, formatTimeRange } from "@/lib/format";
 import { saveCapture } from "@/lib/actions/capture";
+import { ProjectDot } from "@/components/ProjectDot";
+import type { Project } from "@/types/domain";
+
+type ProjectOption = Pick<Project, "id" | "name" | "category" | "shade">;
 
 /**
  * 이 앱의 심장. (브리프 「첫 버전에 꼭 필요한 기능 1」)
@@ -24,9 +28,13 @@ interface Overrides {
   endTime?: string;
 }
 
-export function QuickCapture() {
+export function QuickCapture({ projects }: { projects: ProjectOption[] }) {
   const [raw, setRaw] = useState("");
   const [overrides, setOverrides] = useState<Overrides>({});
+  // 프로젝트와 D-day 는 파싱 결과가 아니라 사용자가 직접 고르는 값이다.
+  // 문장을 고쳐도 유지되고, 저장하고 나서야 비워진다.
+  const [projectId, setProjectId] = useState("");
+  const [isDday, setIsDday] = useState(false);
   const [pending, startTransition] = useTransition();
   const [flash, setFlash] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +73,7 @@ export function QuickCapture() {
   };
 
   const goesToInbox = !draft.date;
+  const selectedProject = projects.find((p) => p.id === projectId) ?? null;
 
   function onRawChange(v: string) {
     setRaw(v);
@@ -80,6 +89,8 @@ export function QuickCapture() {
       date: draft.date || null,
       startTime: draft.startTime || null,
       endTime: draft.endTime || null,
+      projectId: projectId || null,
+      isDday,
     };
     startTransition(async () => {
       const res = await saveCapture(payload);
@@ -87,6 +98,8 @@ export function QuickCapture() {
       setFlash(res.kind === "event" ? "일정으로 저장됨" : "Inbox 에 저장됨");
       setRaw("");
       setOverrides({});
+      setProjectId("");
+      setIsDday(false);
       inputRef.current?.focus();
     });
   }
@@ -131,7 +144,7 @@ export function QuickCapture() {
         {raw.trim() && (
           <div className="pb-3">
             <div className="rounded-c border border-c-line bg-c-surface px-3 py-2.5">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <div className="flex flex-col gap-2">
                 <Field label="제목" className="min-w-0 flex-1">
                   <input
                     value={draft.title}
@@ -183,6 +196,50 @@ export function QuickCapture() {
                       className="bg-transparent text-sm text-c-text-strong outline-none"
                     />
                   </div>
+                </div>
+
+                {/* 소속과 D-day. 파싱으로 자동 감지하는 건 파싱 고도화 단계이므로
+                    지금은 손으로 고른다. 안 골라도 저장은 된다 — 마찰을 만들지 않는다. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <label className="flex items-center gap-2">
+                    <span className="shrink-0 text-[11px] text-c-text-faint">
+                      프로젝트
+                    </span>
+                    {selectedProject && (
+                      <ProjectDot
+                        category={selectedProject.category}
+                        shade={selectedProject.shade}
+                        size={7}
+                      />
+                    )}
+                    <select
+                      value={projectId}
+                      onChange={(e) => setProjectId(e.target.value)}
+                      className="bg-transparent text-sm text-c-text-strong outline-none"
+                    >
+                      <option value="">없음</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsDday((v) => !v)}
+                    aria-pressed={isDday}
+                    className={`flex items-center gap-1 rounded-c border px-1.5 py-0.5 text-[11px] ${
+                      isDday
+                        ? "border-c-urgent/40 text-c-urgent"
+                        : "border-c-line text-c-text-faint"
+                    }`}
+                    data-anim
+                  >
+                    <Flag size={11} strokeWidth={1.75} />
+                    D-day
+                  </button>
                 </div>
               </div>
             </div>

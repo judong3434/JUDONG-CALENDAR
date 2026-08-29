@@ -23,6 +23,9 @@ export interface ConfirmedCapture {
   date: string | null;
   startTime: string | null;
   endTime: string | null;
+  projectId: string | null;
+  /** D-day 스트립에 올릴지. 파싱으로 자동 감지하는 건 파싱 고도화 단계. */
+  isDday: boolean;
 }
 
 export async function saveCapture(input: ConfirmedCapture) {
@@ -43,6 +46,8 @@ export async function saveCapture(input: ConfirmedCapture) {
       // 시작 없이 종료만 있는 건 일정이 아니다
       endTime: input.startTime ? input.endTime || null : null,
       allDay: !input.startTime,
+      projectId: input.projectId || null,
+      isDday: input.isDday,
       captureId,
     });
   });

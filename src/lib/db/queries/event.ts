@@ -1,5 +1,5 @@
 import { all, run, newId } from "../client";
-import type { Event } from "@/types/domain";
+import type { Category, Event } from "@/types/domain";
 
 interface EventRow {
   id: string;
@@ -31,20 +31,54 @@ function toEvent(r: EventRow): Event {
   };
 }
 
+/** 화면에 찍으려면 소속 프로젝트의 색이 필요하다. */
+export interface EventItem extends Event {
+  projectName: string | null;
+  projectCategory: Category | null;
+  projectShade: number | null;
+}
+
+type EventItemRow = EventRow & {
+  project_name: string | null;
+  project_category: Category | null;
+  project_shade: number | null;
+};
+
+function toEventItem(r: EventItemRow): EventItem {
+  return {
+    ...toEvent(r),
+    projectName: r.project_name,
+    projectCategory: r.project_category,
+    projectShade: r.project_shade,
+  };
+}
+
+const EVENT_SELECT = `
+  SELECT e.*,
+         p.name     AS project_name,
+         p.category AS project_category,
+         p.shade    AS project_shade
+    FROM event e
+    LEFT JOIN project p ON p.id = e.project_id
+`;
+
 export interface NewEvent {
   title: string;
   date: string;
   startTime?: string | null;
   endTime?: string | null;
   allDay?: boolean;
+  projectId?: string | null;
+  isDday?: boolean;
   captureId?: string | null;
 }
 
 export function insertEvent(e: NewEvent): string {
   const id = newId();
   run(
-    `INSERT INTO event (id, title, date, start_time, end_time, all_day, capture_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO event
+       (id, title, date, start_time, end_time, all_day, project_id, is_dday, capture_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     id,
     e.title,
     e.date,
@@ -52,29 +86,62 @@ export function insertEvent(e: NewEvent): string {
     e.endTime ?? null,
     // 시간이 없으면 종일 일정으로 본다
     (e.allDay ?? !e.startTime) ? 1 : 0,
+    e.projectId ?? null,
+    e.isDday ? 1 : 0,
     e.captureId ?? null,
   );
   return id;
 }
 
-/**
- * 임시 조회. 1단계에서는 캘린더도 대시보드도 없어서 저장된 일정을 볼 곳이 없다.
- * 2단계(홈 대시보드)에서 날짜 기준 조회로 교체된다.
- */
-export interface EventWithRaw extends Event {
-  /** 이 일정을 만든 원본 한 줄. 정제된 제목보다 이게 기억을 되살린다. */
-  rawText: string | null;
+/** 오늘의 일정 — 시간순 타임라인. 종일 일정이 맨 위. */
+export function listEventsOn(date: string): EventItem[] {
+  return all<EventItemRow>(
+    `${EVENT_SELECT}
+      WHERE e.date = ?
+      ORDER BY e.start_time IS NULL DESC, e.start_time`,
+    date,
+  ).map(toEventItem);
 }
 
-export function listRecentEvents(limit = 20): EventWithRaw[] {
-  return all<EventRow & { raw_text: string | null }>(
-    `SELECT e.*, c.raw_text
-       FROM event e
-       LEFT JOIN capture c ON c.id = e.capture_id
-      ORDER BY e.date DESC, e.start_time IS NULL, e.start_time DESC
+/**
+ * D-day 스트립 — 가까운 순. 지난 것은 자동으로 빠진다.
+ * (기획서 §4.1 ③ "지난 건 자동으로 사라짐")
+ */
+export function listUpcomingDdays(today: string, limit = 12): EventItem[] {
+  return all<EventItemRow>(
+    `${EVENT_SELECT}
+      WHERE e.is_dday = 1 AND e.date >= ?
+      ORDER BY e.date
       LIMIT ?`,
+    today,
     limit,
-  ).map((r) => ({ ...toEvent(r), rawText: r.raw_text }));
+  ).map(toEventItem);
+}
+
+/** 이번 주 미니 캘린더 — 날짜별로 색 점만 찍는다. 상세는 캘린더 탭에서. */
+export interface DayDot {
+  date: string;
+  category: Category | null;
+  shade: number | null;
+}
+
+export function listEventDots(from: string, to: string): DayDot[] {
+  return all<{ date: string; category: Category | null; shade: number | null }>(
+    `SELECT e.date, p.category, p.shade
+       FROM event e LEFT JOIN project p ON p.id = e.project_id
+      WHERE e.date BETWEEN ? AND ?
+      ORDER BY e.date, e.start_time IS NULL DESC, e.start_time`,
+    from,
+    to,
+  );
+}
+
+export function setEventProject(id: string, projectId: string | null): void {
+  run(
+    "UPDATE event SET project_id = ?, updated_at = datetime('now') WHERE id = ?",
+    projectId,
+    id,
+  );
 }
 
 export function deleteEvent(id: string): void {
